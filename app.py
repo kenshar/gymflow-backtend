@@ -6,21 +6,17 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
-# --- DATABASE CONFIGURATION ---
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://gymflow:password123@localhost/gymflow_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# --- MEMBER MODEL ---
 class Member(db.Model):
     __tablename__ = 'members'
-    
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    phone = db.Column(db.String(20))
     status = db.Column(db.String(20), default='active') 
     membership_end_date = db.Column(db.Date, nullable=False)
 
@@ -34,8 +30,6 @@ class Member(db.Model):
             'membershipEndDate': str(self.membership_end_date)
         }
 
-# --- ROUTES ---
-
 @app.route('/api/members', methods=['POST'])
 def create_member():
     data = request.json
@@ -44,7 +38,6 @@ def create_member():
             first_name=data['firstName'],
             last_name=data['lastName'],
             email=data['email'],
-            phone=data.get('phone', ''),
             membership_end_date=datetime.strptime(data['membershipEndDate'], '%Y-%m-%d').date()
         )
         db.session.add(new_member)
@@ -53,25 +46,21 @@ def create_member():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+# --- THIS IS THE TASK 2 SOLUTION ---
 @app.route('/api/members', methods=['GET'])
 def get_members():
     members = Member.query.all()
+    today = datetime.now().date()
+    
+    # Check for expired members
+    for member in members:
+        if member.membership_end_date < today and member.status == 'active':
+            member.status = 'expired'
+            
+    db.session.commit()
     return jsonify([m.to_dict() for m in members])
+# -----------------------------------
 
-# NEW: Delete a member by ID
-@app.route('/api/members/<int:id>', methods=['DELETE'])
-def delete_member(id):
-    try:
-        member = Member.query.get(id)
-        if member:
-            db.session.delete(member)
-            db.session.commit()
-            return jsonify({'message': 'Member deleted'}), 200
-        return jsonify({'error': 'Member not found'}), 404
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# --- RUN SERVER ---
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
