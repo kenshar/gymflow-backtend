@@ -6,13 +6,13 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
-# --- DATABASE CONFIGURATION ---
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://gymflow:password123@localhost/gymflow_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# --- MEMBER MODEL ---
+
 class Member(db.Model):
     __tablename__ = 'members'
     
@@ -34,7 +34,7 @@ class Member(db.Model):
             'membershipEndDate': str(self.membership_end_date)
         }
 
-# --- ROUTES ---
+
 
 @app.route('/api/members', methods=['POST'])
 def create_member():
@@ -58,7 +58,7 @@ def get_members():
     members = Member.query.all()
     return jsonify([m.to_dict() for m in members])
 
-# NEW: Delete a member by ID
+
 @app.route('/api/members/<int:id>', methods=['DELETE'])
 def delete_member(id):
     try:
@@ -71,7 +71,6 @@ def delete_member(id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# --- RUN SERVER ---
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
