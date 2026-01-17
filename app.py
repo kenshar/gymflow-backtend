@@ -30,7 +30,7 @@ class Member(db.Model):
             'membershipEndDate': str(self.membership_end_date)
         }
 
-# --- THIS IS THE TASK 3 SOLUTION (New Table) ---
+
 class Attendance(db.Model):
     __tablename__ = 'attendance'
     id = db.Column(db.Integer, primary_key=True)
@@ -43,7 +43,7 @@ class Attendance(db.Model):
             'memberId': self.member_id,
             'checkInTime': str(self.check_in_time)
         }
-# -----------------------------------------------
+
 
 @app.route('/api/members', methods=['POST'])
 def create_member():
@@ -65,25 +65,23 @@ def create_member():
 def get_members():
     members = Member.query.all()
     return jsonify([m.to_dict() for m in members])
-
-# --- THIS IS THE TASK 3 SOLUTION (New Route) ---
+    
 @app.route('/api/attendance', methods=['POST'])
 def check_in():
     data = request.json
     member_id = data.get('memberId')
     
-    # Validate member exists
     member = Member.query.get(member_id)
     if not member:
         return jsonify({'error': 'Member not found'}), 404
 
-    # Save visit
+    
     new_visit = Attendance(member_id=member_id)
     db.session.add(new_visit)
     db.session.commit()
     
     return jsonify({'message': f'Checked in member {member_id}', 'time': str(new_visit.check_in_time)}), 201
-# -----------------------------------------------
+
 
 if __name__ == '__main__':
     with app.app_context():
