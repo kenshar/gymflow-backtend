@@ -46,20 +46,20 @@ def create_member():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-# --- THIS IS THE TASK 2 SOLUTION ---
+
 @app.route('/api/members', methods=['GET'])
 def get_members():
     members = Member.query.all()
     today = datetime.now().date()
     
-    # Check for expired members
+    
     for member in members:
         if member.membership_end_date < today and member.status == 'active':
             member.status = 'expired'
             
     db.session.commit()
     return jsonify([m.to_dict() for m in members])
-# -----------------------------------
+
 
 if __name__ == '__main__':
     with app.app_context():
