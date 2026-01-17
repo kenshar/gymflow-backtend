@@ -5,8 +5,20 @@ name = "pypi"
 
 [packages]
 flask = "*"
+flask-sqlalchemy = "*"
+flask-migrate = "*"
+psycopg2-binary = "*"
+python-jose = "*"
+passlib = "*"
+bcrypt = "*"
+python-dotenv = "*"
+flask-cors = "*"
+argon2-cffi = "*"
 
 [dev-packages]
+pytest = "*"
+pytest-asyncio = "*"
+httpx = "*"
 
 [requires]
 python_version = "3.12"
