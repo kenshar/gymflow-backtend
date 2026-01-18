@@ -62,6 +62,12 @@ def require_auth(f):
         if not token:
             return jsonify({'error': 'Missing authorization token'}), 401
         
+        # Check if token is blacklisted
+        from app.models import Member, TokenBlacklist
+        blacklisted = TokenBlacklist.query.filter_by(token=token).first()
+        if blacklisted:
+            return jsonify({'error': 'Token has been revoked'}), 401
+        
         payload = decode_token(token)
         if not payload:
             return jsonify({'error': 'Invalid or expired token'}), 401
@@ -71,7 +77,6 @@ def require_auth(f):
             return jsonify({'error': 'Invalid token'}), 401
         
         # Get current user from database
-        from app.models import Member
         current_user = Member.query.get(member_id)
         
         if not current_user:
@@ -81,3 +86,29 @@ def require_auth(f):
         return f(current_user, *args, **kwargs)
     
     return decorated_function
+
+
+def require_role(required_role):
+    """Decorator to check if user has required role"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(current_user, *args, **kwargs):
+            if not current_user.has_role(required_role):
+                return jsonify({'error': f'Unauthorized - requires {required_role} role'}), 403
+            return f(current_user, *args, **kwargs)
+        return decorated_function
+    return decorator
+
+
+def generate_password_reset_token(member_id: int) -> str:
+    """Generate a password reset token"""
+    import secrets
+    return secrets.token_urlsafe(32)
+
+
+def blacklist_token(token: str, member_id: int, expires_at):
+    """Add token to blacklist"""
+    from app.models import db, TokenBlacklist
+    blacklisted = TokenBlacklist(token=token, member_id=member_id, expires_at=expires_at)
+    db.session.add(blacklisted)
+    db.session.commit()

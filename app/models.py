@@ -17,6 +17,11 @@ class Member(db.Model):
     first_name = db.Column(db.String(100), nullable=True)
     last_name = db.Column(db.String(100), nullable=True)
     phone = db.Column(db.String(20), nullable=True)
+    role = db.Column(db.String(20), default='member')  # admin, trainer, member
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    locked_until = db.Column(db.DateTime, nullable=True)
+    password_reset_token = db.Column(db.String(255), nullable=True, unique=True)
+    password_reset_expires = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=utc_now)
     updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now)
     
@@ -25,12 +30,39 @@ class Member(db.Model):
     attendances = db.relationship("Attendance", back_populates="member", cascade="all, delete-orphan")
     workout_logs = db.relationship("WorkoutLog", back_populates="member", cascade="all, delete-orphan")
     
+    def is_account_locked(self):
+        """Check if account is locked"""
+        if not self.locked_until:
+            return False
+        return utc_now() < self.locked_until
+    
+    def unlock_account(self):
+        """Unlock the account"""
+        self.failed_login_attempts = 0
+        self.locked_until = None
+    
+    def increment_failed_attempts(self):
+        """Increment failed login attempts and lock if necessary"""
+        self.failed_login_attempts += 1
+        if self.failed_login_attempts >= 5:
+            from datetime import timedelta
+            self.locked_until = utc_now() + timedelta(minutes=30)
+    
+    def reset_failed_attempts(self):
+        """Reset failed login attempts"""
+        self.failed_login_attempts = 0
+        self.locked_until = None
+    
     def is_active(self):
         """Check if member has an active membership"""
         if not self.memberships:
             return False
         active_membership = [m for m in self.memberships if m.is_active()]
         return len(active_membership) > 0
+    
+    def has_role(self, role):
+        """Check if member has a specific role"""
+        return self.role == role or self.role == 'admin'
     
     def to_dict(self):
         return {
@@ -40,7 +72,9 @@ class Member(db.Model):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'phone': self.phone,
+            'role': self.role,
             'is_active': self.is_active(),
+            'is_locked': self.is_account_locked(),
             'created_at': self.created_at.isoformat(),
         }
 
@@ -189,3 +223,17 @@ class WorkoutExercise(db.Model):
             'weight': self.weight,
             'notes': self.notes,
         }
+
+
+class TokenBlacklist(db.Model):
+    __tablename__ = "token_blacklist"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(500), unique=True, nullable=False, index=True)
+    member_id = db.Column(db.Integer, db.ForeignKey("members.id"), nullable=False, index=True)
+    blacklisted_at = db.Column(db.DateTime, default=utc_now)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    
+    def is_blacklisted(self):
+        """Check if token is still blacklisted"""
+        return utc_now() < self.expires_at
