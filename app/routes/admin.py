@@ -6,14 +6,14 @@ from datetime import datetime, timezone
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
 def utc_now():
-    """Return current UTC time (timezone-aware)"""
+    """Returning the current UTC time rn (timezone-aware). No cap fr fr."""
     return datetime.now(timezone.utc)
 
 @admin_bp.route('/dashboard', methods=['GET'])
 @require_auth
 @require_role('admin')
 def dashboard(current_user):
-    """Get admin dashboard statistics"""
+    """Getting admin dashboard statistics rn. Pulling the system tea lowkey bestie fr."""
     total_members = Member.query.count()
     total_active_memberships = Membership.query.filter(
         Membership.end_date > utc_now()
@@ -34,7 +34,7 @@ def dashboard(current_user):
 @require_auth
 @require_role('admin')
 def list_all_members(current_user):
-    """List all members (admin only)"""
+    """Listing all members (admin only). Serving the full roster no cap fr."""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     
@@ -70,7 +70,7 @@ def list_all_members(current_user):
 @require_auth
 @require_role('admin')
 def update_member_role(current_user, member_id):
-    """Update a member's role (admin only)"""
+    """Updating a member's role (admin only). That power move energy fr fr."""
     if member_id == current_user.id:
         return jsonify({'error': 'Cannot change your own role'}), 400
     
@@ -98,7 +98,7 @@ def update_member_role(current_user, member_id):
 @require_auth
 @require_role('admin')
 def unlock_member_account(current_user, member_id):
-    """Unlock a locked member account (admin only)"""
+    """Unlocking a locked member account (admin only). Freeing them energy fr fr."""
     member = Member.query.get(member_id)
     if not member:
         return jsonify({'error': 'Member not found'}), 404
@@ -118,7 +118,7 @@ def unlock_member_account(current_user, member_id):
 @require_auth
 @require_role('admin')
 def delete_member_admin(current_user, member_id):
-    """Delete a member (admin only)"""
+    """Deleting a member (admin only). The nuclear option energy no cap fr."""
     if member_id == current_user.id:
         return jsonify({'error': 'Cannot delete your own account via admin endpoint'}), 400
     
@@ -135,7 +135,7 @@ def delete_member_admin(current_user, member_id):
 @require_auth
 @require_role('admin')
 def list_all_memberships(current_user):
-    """List all memberships (admin only)"""
+    """Listing all memberships (admin only). Serving the membership tea bestie fr."""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     
@@ -161,7 +161,7 @@ def list_all_memberships(current_user):
 @require_auth
 @require_role('admin')
 def list_all_attendance(current_user):
-    """List all attendance records (admin only)"""
+    """Listing all attendance records (admin only). Pulling the check-in tea fr fr."""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
     
@@ -185,7 +185,7 @@ def list_all_attendance(current_user):
 @require_auth
 @require_role('admin')
 def list_all_workouts(current_user):
-    """List all workouts (admin only)"""
+    """Listing all workouts (admin only). Serving the gains energy no cap fr."""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
     
@@ -209,7 +209,7 @@ def list_all_workouts(current_user):
 @require_auth
 @require_role('admin')
 def get_member_stats(current_user, member_id):
-    """Get detailed statistics for a member (admin only)"""
+    """Getting detailed statistics for a member (admin only). Pulling the analytics tea fr."""
     member = Member.query.get(member_id)
     if not member:
         return jsonify({'error': 'Member not found'}), 404

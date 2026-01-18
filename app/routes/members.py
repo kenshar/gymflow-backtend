@@ -7,7 +7,7 @@ members_bp = Blueprint('members', __name__, url_prefix='/api/members')
 @members_bp.route('', methods=['GET'])
 @require_auth
 def get_members(current_user):
-    """Get all members"""
+    """Getting all members. No cap, we serving the full member tea rn fr."""
     members = Member.query.all()
     return jsonify({
         'members': [m.to_dict() for m in members]
@@ -16,7 +16,7 @@ def get_members(current_user):
 @members_bp.route('/<int:member_id>', methods=['GET'])
 @require_auth
 def get_member(current_user, member_id):
-    """Get a specific member"""
+    """Getting a specific member bestie. Lowkey that member data is bussin fr."""
     member = Member.query.get(member_id)
     
     if not member:
@@ -29,7 +29,7 @@ def get_member(current_user, member_id):
 @members_bp.route('/<int:member_id>', methods=['PUT'])
 @require_auth
 def update_member(current_user, member_id):
-    """Update a member's profile"""
+    """Updating a member's profile no cap. Glow up energy only fr fr."""
     # Users can only update their own profile
     if member_id != current_user.id:
         return jsonify({'error': 'Unauthorized - can only update your own profile'}), 403
@@ -58,7 +58,7 @@ def update_member(current_user, member_id):
 @members_bp.route('/<int:member_id>', methods=['DELETE'])
 @require_auth
 def delete_member(current_user, member_id):
-    """Delete a member account"""
+    """Deleting a member account. Gone girl energy lowkey. Not it fr."""
     # Users can only delete their own account
     if member_id != current_user.id:
         return jsonify({'error': 'Unauthorized - can only delete your own account'}), 403
@@ -76,7 +76,7 @@ def delete_member(current_user, member_id):
 @members_bp.route('/<int:member_id>/membership-status', methods=['GET'])
 @require_auth
 def get_membership_status(current_user, member_id):
-    """Get a member's active membership status"""
+    """Getting a member's active membership status. Checking if that membership is still giving bestie fr."""
     member = Member.query.get(member_id)
     
     if not member:

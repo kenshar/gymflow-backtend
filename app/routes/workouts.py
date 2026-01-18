@@ -6,13 +6,13 @@ from datetime import datetime, timezone
 workouts_bp = Blueprint('workouts', __name__, url_prefix='/api/workouts')
 
 def utc_now():
-    """Return current UTC time (timezone-aware)"""
+    """Returning the current UTC time rn (timezone-aware). No cap fr fr."""
     return datetime.now(timezone.utc)
 
 @workouts_bp.route('', methods=['GET'])
 @require_auth
 def get_workouts(current_user):
-    """Get all workouts for current user"""
+    """Getting all workouts for the current user. Pulling those W's fr fr."""
     workouts = WorkoutLog.query.filter_by(member_id=current_user.id).order_by(WorkoutLog.workout_date.desc()).all()
     return jsonify({
         'workouts': [w.to_dict() for w in workouts]
@@ -21,7 +21,7 @@ def get_workouts(current_user):
 @workouts_bp.route('/<int:workout_id>', methods=['GET'])
 @require_auth
 def get_workout(current_user, workout_id):
-    """Get a specific workout"""
+    """Getting a specific workout lowkey. That exercise data be serving rn fr."""
     workout = WorkoutLog.query.get(workout_id)
     
     if not workout:
@@ -38,7 +38,7 @@ def get_workout(current_user, workout_id):
 @workouts_bp.route('', methods=['POST'])
 @require_auth
 def create_workout(current_user):
-    """Log a new workout session"""
+    """Logging a new workout session rn. Getting those gains documented bestie no cap fr."""
     data = request.get_json()
     
     if not data or 'exercises' not in data:
@@ -86,7 +86,7 @@ def create_workout(current_user):
 @workouts_bp.route('/<int:workout_id>', methods=['PUT'])
 @require_auth
 def update_workout(current_user, workout_id):
-    """Update a workout"""
+    """Updating a workout fr fr. Recalibrating them gains energy bestie."""
     workout = WorkoutLog.query.get(workout_id)
     
     if not workout:
@@ -134,7 +134,7 @@ def update_workout(current_user, workout_id):
 @workouts_bp.route('/<int:workout_id>', methods=['DELETE'])
 @require_auth
 def delete_workout(current_user, workout_id):
-    """Delete a workout"""
+    """Deleting a workout rn. Removing the evidence bestie. Not it fr."""
     workout = WorkoutLog.query.get(workout_id)
     
     if not workout:
@@ -152,7 +152,7 @@ def delete_workout(current_user, workout_id):
 @workouts_bp.route('/<int:workout_id>/exercises', methods=['POST'])
 @require_auth
 def add_exercise(current_user, workout_id):
-    """Add an exercise to an existing workout"""
+    """Adding an exercise to an existing workout fr fr. That gains energy fr."""
     workout = WorkoutLog.query.get(workout_id)
     
     if not workout:
