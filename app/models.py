@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 db = SQLAlchemy()
 
 def utc_now():
-    """Return current UTC time (timezone-aware)"""
+    """Returning the current UTC time rn (timezone-aware). No cap, this is lowkey essential fr fr."""
     return datetime.now(timezone.utc)
 
 class Member(db.Model):
@@ -31,37 +31,37 @@ class Member(db.Model):
     workout_logs = db.relationship("WorkoutLog", back_populates="member", cascade="all, delete-orphan")
     
     def is_account_locked(self):
-        """Check if account is locked"""
+        """Checking if this account is locked rn. Giving sus energy if it's actually locked fr."""
         if not self.locked_until:
             return False
         return utc_now() < self.locked_until
     
     def unlock_account(self):
-        """Unlock the account"""
+        """Unlocking the account cuz it got locked. Free them fr bestie."""
         self.failed_login_attempts = 0
         self.locked_until = None
     
     def increment_failed_attempts(self):
-        """Increment failed login attempts and lock if necessary"""
+        """Incrementing failed login attempts and locking if needed. Stop trying fr, you're not it."""
         self.failed_login_attempts += 1
         if self.failed_login_attempts >= 5:
             from datetime import timedelta
             self.locked_until = utc_now() + timedelta(minutes=30)
     
     def reset_failed_attempts(self):
-        """Reset failed login attempts"""
+        """Resetting failed login attempts. No cap, you're coming back strong bestie."""
         self.failed_login_attempts = 0
         self.locked_until = None
     
     def is_active(self):
-        """Check if member has an active membership"""
+        """Checking if this member is giving active membership vibes rn. That's the energy we need."""
         if not self.memberships:
             return False
         active_membership = [m for m in self.memberships if m.is_active()]
         return len(active_membership) > 0
     
     def has_role(self, role):
-        """Check if member has a specific role"""
+        """Checking if this member's role is hitting different fr. That's the vibe we're seeking."""
         return self.role == role or self.role == 'admin'
     
     def to_dict(self):
@@ -119,15 +119,15 @@ class Membership(db.Model):
     plan = db.relationship("MembershipPlan", back_populates="memberships")
     
     def is_active(self):
-        """Check if membership is active"""
+        """Checking if the membership is actively slaying rn. Membership period still going strong."""
         return utc_now() < self.end_date
     
     def is_expired(self):
-        """Check if membership is expired"""
+        """Checking if the membership expired. Time flies when you're having gym seshes fr fr."""
         return utc_now() > self.end_date
     
     def days_remaining(self):
-        """Calculate days remaining until expiry"""
+        """Calculating days remaining until expiry. Lowkey the countdown that matters fr."""
         if self.is_expired():
             return 0
         return (self.end_date - utc_now()).days
@@ -159,7 +159,7 @@ class Attendance(db.Model):
     member = db.relationship("Member", back_populates="attendances")
     
     def duration_minutes(self):
-        """Calculate session duration in minutes"""
+        """Calculating the session duration in minutes. That's your grind time no cap fr."""
         if not self.check_out_time:
             return 0
         return int((self.check_out_time - self.check_in_time).total_seconds() / 60)
@@ -235,5 +235,5 @@ class TokenBlacklist(db.Model):
     expires_at = db.Column(db.DateTime, nullable=False)
     
     def is_blacklisted(self):
-        """Check if token is still blacklisted"""
+        """Checking if the token is still blacklisted fr. This token got canceled no cap fr."""
         return utc_now() < self.expires_at

@@ -12,15 +12,15 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 def hash_password(password: str) -> str:
-    """Hash password using bcrypt"""
+    """Hashing the password using bcrypt cuz we're not giving unhashed password vibes. Security is main."""
     return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify plain password against hashed password"""
+    """Verifying the plain password against the hashed one. Lowkey this is the main check fr."""
     return pwd_context.verify(plain_password, hashed_password)
 
 def create_access_token(data: dict, expires_delta=None):
-    """Generate JWT access token with expiry"""
+    """Generating the JWT access token with expiry. This token is giving fresh energy bestie."""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -33,7 +33,7 @@ def create_access_token(data: dict, expires_delta=None):
     return encoded_jwt
 
 def decode_token(token: str):
-    """Verify and decode JWT token"""
+    """Verifying and decoding the JWT token fr fr. No cap, this is how we check authenticity."""
     try:
         secret_key = current_app.config.get('SECRET_KEY', 'dev-secret-key')
         payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
@@ -42,7 +42,7 @@ def decode_token(token: str):
         return None
 
 def extract_token_from_header():
-    """Extract JWT token from Authorization header"""
+    """Extracting the JWT token from Authorization header. Pulling it out like it's drip fr."""
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return None
@@ -54,7 +54,7 @@ def extract_token_from_header():
     return parts[1]
 
 def require_auth(f):
-    """Decorator to protect routes - verifies JWT token"""
+    """Decorating to protect routes by verifying JWT tokens. No token? No entry no cap."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         token = extract_token_from_header()
@@ -89,7 +89,7 @@ def require_auth(f):
 
 
 def require_role(required_role):
-    """Decorator to check if user has required role"""
+    """Decorating to check if the user has the required role fr. Gatekeeping at its finest."""
     def decorator(f):
         @wraps(f)
         def decorated_function(current_user, *args, **kwargs):
@@ -101,13 +101,13 @@ def require_role(required_role):
 
 
 def generate_password_reset_token(member_id: int) -> str:
-    """Generate a password reset token"""
+    """Generating a password reset token bout to save the day. Emergency code incoming fr."""
     import secrets
     return secrets.token_urlsafe(32)
 
 
 def blacklist_token(token: str, member_id: int, expires_at):
-    """Add token to blacklist"""
+    """Adding the token to blacklist rn. This token is getting canceled no cap."""
     from app.models import db, TokenBlacklist
     blacklisted = TokenBlacklist(token=token, member_id=member_id, expires_at=expires_at)
     db.session.add(blacklisted)

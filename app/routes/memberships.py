@@ -6,12 +6,12 @@ from datetime import datetime, timezone, timedelta
 memberships_bp = Blueprint('memberships', __name__, url_prefix='/api/memberships')
 
 def utc_now():
-    """Return current UTC time (timezone-aware)"""
+    """Returning the current UTC time rn (timezone-aware). No cap fr fr."""
     return datetime.now(timezone.utc)
 
 @memberships_bp.route('/plans', methods=['GET'])
 def get_plans():
-    """Get all available membership plans"""
+    """Getting all available membership plans. Slay with these options bestie fr fr."""
     plans = MembershipPlan.query.all()
     return jsonify({
         'plans': [p.to_dict() for p in plans]
@@ -20,7 +20,7 @@ def get_plans():
 @memberships_bp.route('', methods=['GET'])
 @require_auth
 def get_memberships(current_user):
-    """Get all memberships for current user"""
+    """Getting all memberships for the current user. Pulling the membership energy lowkey."""
     memberships = Membership.query.filter_by(member_id=current_user.id).all()
     return jsonify({
         'memberships': [m.to_dict() for m in memberships]
@@ -29,7 +29,7 @@ def get_memberships(current_user):
 @memberships_bp.route('/<int:membership_id>', methods=['GET'])
 @require_auth
 def get_membership(current_user, membership_id):
-    """Get a specific membership"""
+    """Getting a specific membership rn. That tea be hitting different fr."""
     membership = Membership.query.get(membership_id)
     
     if not membership:
@@ -46,7 +46,7 @@ def get_membership(current_user, membership_id):
 @memberships_bp.route('', methods=['POST'])
 @require_auth
 def create_membership(current_user):
-    """Create/purchase a new membership for current user"""
+    """Creating/purchasing a new membership for the current user. That commitment energy no cap fr."""
     data = request.get_json()
     
     if not data or 'plan_id' not in data:
@@ -77,7 +77,7 @@ def create_membership(current_user):
 @memberships_bp.route('/<int:membership_id>', methods=['PUT'])
 @require_auth
 def renew_membership(current_user, membership_id):
-    """Renew/extend an existing membership"""
+    """Renewing/extending an existing membership rn. Resetting that timer bestie fr."""
     membership = Membership.query.get(membership_id)
     
     if not membership:
@@ -113,7 +113,7 @@ def renew_membership(current_user, membership_id):
 @memberships_bp.route('/<int:membership_id>', methods=['DELETE'])
 @require_auth
 def cancel_membership(current_user, membership_id):
-    """Cancel a membership"""
+    """Canceling a membership fr fr. The breakup energy lowkey. Not it bestie."""
     membership = Membership.query.get(membership_id)
     
     if not membership:
