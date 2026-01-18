@@ -1,0 +1,27 @@
+# --- Security (CRITICAL) ---
+.env
+.env.local
+config.py
+
+# --- Virtual Environment ---
+venv/
+env/
+.venv/
+
+# --- Python Cache ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- IDE Settings (VS Code) ---
+.vscode/
+.idea/
+
+# --- Database (if using local sqlite) ---
+*.sqlite3
+*.db
+
+# --- OS Generated Files ---
+.DS_Store
+Thumbs.db
+.env
