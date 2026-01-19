@@ -13,16 +13,18 @@ def create_app(config_name="development"):
     app = Flask(__name__)
 
     # Configuration
-    database_url = os.getenv('DATABASE_URL')
+    database_url = os.getenv('DATABASE_URL', '').strip()
 
     # Handle Render's postgres:// URL (needs to be postgresql://)
     if database_url and database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
 
-    # Use SQLite as fallback if no DATABASE_URL is set
+    # Use SQLite as fallback if no DATABASE_URL is set or empty
     if not database_url:
         database_url = 'sqlite:///gymflow.db'
+        print("WARNING: No DATABASE_URL found, using SQLite fallback")
 
+    print(f"Database URL: {database_url[:20]}...")  # Print first 20 chars for debugging
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JSON_SORT_KEYS'] = False
