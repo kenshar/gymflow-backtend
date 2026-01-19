@@ -135,7 +135,7 @@ def delete_member_admin(current_user, member_id):
 @require_auth
 @require_role('admin')
 def list_all_memberships(current_user):
-    """Listing all memberships (admin only). Serving the membership tea bestie fr."""
+    """Listing all memberships (admin only). Serving the membership tea  fr."""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     
