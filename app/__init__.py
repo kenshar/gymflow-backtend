@@ -31,11 +31,12 @@ def create_app(config_name="development"):
         db.create_all()
     
     # Register blueprints
-    from app.routes import auth_bp, members_bp, memberships_bp, attendance_bp, workouts_bp
+    from app.routes import auth_bp, members_bp, memberships_bp, attendance_bp, workouts_bp, admin_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(members_bp)
     app.register_blueprint(memberships_bp)
     app.register_blueprint(attendance_bp)
     app.register_blueprint(workouts_bp)
+    app.register_blueprint(admin_bp)
     
     return app
