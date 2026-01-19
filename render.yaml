@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: gymflow-backend
+    runtime: python
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn run:app --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gymflow-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRY_MINUTES
+        value: 30
+      - key: FRONTEND_URL
+        value: https://kenshar.github.io
+
+databases:
+  - name: gymflow-db
+    databaseName: gymflow_20os
+    user: gymflow_user
