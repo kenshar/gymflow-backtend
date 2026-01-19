@@ -25,12 +25,16 @@ def create_app(config_name="development"):
     db.init_app(app)
     migrate.init_app(app, db)
     
-    # Configure CORS - Allow everything
-    CORS(app, 
-         resources={r"/*": {"origins": "*"}},
-         supports_credentials=True,
-         allow_headers=["*"],
-         methods=["*"])
+    # Configure CORS - Allow GitHub Pages and all necessary headers
+    CORS(app,
+         resources={r"/api/*": {
+             "origins": ["https://kenshar.github.io", "http://localhost:5173", "http://localhost:3000"],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization"],
+             "expose_headers": ["Content-Type", "Authorization"],
+             "supports_credentials": True,
+             "max_age": 3600
+         }})
     
     # Create tables
     with app.app_context():
