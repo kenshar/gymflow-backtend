@@ -31,13 +31,13 @@ class Member(db.Model):
     workout_logs = db.relationship("WorkoutLog", back_populates="member", cascade="all, delete-orphan")
     
     def is_account_locked(self):
-        """Checking if this account is locked rn. Giving sus energy if it's actually locked fr."""
+        """Checking if this account is locked rn.."""
         if not self.locked_until:
             return False
         return utc_now() < self.locked_until
     
     def unlock_account(self):
-        """Unlocking the account cuz it got locked. Free them fr bestie."""
+        """Unlocking the account cuz it got locked."""
         self.failed_login_attempts = 0
         self.locked_until = None
     
