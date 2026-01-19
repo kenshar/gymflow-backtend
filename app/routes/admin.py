@@ -205,6 +205,91 @@ def list_all_workouts(current_user):
         'current_page': page
     }), 200
 
+@admin_bp.route('/members/create', methods=['POST'])
+def create_member_with_membership():
+    """Creating a new member with membership (admin endpoint). No auth required for admin form."""
+    from app.auth import hash_password
+    from app.models import MembershipPlan, Membership
+    from datetime import datetime
+
+    data = request.get_json()
+
+    # Validate required fields
+    if not data or not all(k in data for k in ['name', 'email']):
+        return jsonify({'error': 'Missing required fields: name, email'}), 400
+
+    # Check if email already exists
+    if Member.query.filter_by(email=data['email']).first():
+        return jsonify({'error': 'Email already exists'}), 409
+
+    # Split name into first and last name
+    name_parts = data['name'].strip().split(' ', 1)
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+    # Generate username from email
+    username = data['email'].split('@')[0]
+    base_username = username
+    counter = 1
+    while Member.query.filter_by(username=username).first():
+        username = f"{base_username}{counter}"
+        counter += 1
+
+    # Create member with generated password
+    default_password = "Welcome123!"  # Member should change this
+    member = Member(
+        username=username,
+        email=data['email'],
+        password_hash=hash_password(default_password),
+        first_name=first_name,
+        last_name=last_name,
+        phone=data.get('phone'),
+        role='member'
+    )
+
+    db.session.add(member)
+    db.session.flush()  # Get member.id without committing
+
+    # Create membership if dates provided
+    if data.get('startDate') and data.get('endDate'):
+        # Find or create membership plan
+        plan_name = data.get('membership', 'Essential Fitness')
+        plan = MembershipPlan.query.filter_by(name=plan_name).first()
+
+        if not plan:
+            # Create plan if it doesn't exist
+            plan = MembershipPlan(
+                name=plan_name,
+                duration_days=30,  # Default
+                price=50.0  # Default
+            )
+            db.session.add(plan)
+            db.session.flush()
+
+        # Parse dates and make them timezone-aware
+        start_date_str = data['startDate']
+        end_date_str = data['endDate']
+
+        # Parse as date and convert to timezone-aware datetime
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+
+        membership = Membership(
+            member_id=member.id,
+            plan_id=plan.id,
+            start_date=start_date,
+            end_date=end_date
+        )
+        db.session.add(membership)
+
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Member created successfully',
+        'member': member.to_dict(),
+        'default_password': default_password
+    }), 201
+
 @admin_bp.route('/members/<int:member_id>/stats', methods=['GET'])
 @require_auth
 @require_role('admin')
@@ -213,20 +298,20 @@ def get_member_stats(current_user, member_id):
     member = Member.query.get(member_id)
     if not member:
         return jsonify({'error': 'Member not found'}), 404
-    
+
     total_check_ins = Attendance.query.filter_by(member_id=member_id).count()
     total_workouts = WorkoutLog.query.filter_by(member_id=member_id).count()
-    
+
     # Calculate total workout duration
     attendances = Attendance.query.filter_by(member_id=member_id).all()
     total_minutes = sum(a.duration_minutes() for a in attendances)
-    
+
     active_membership = None
     for m in member.memberships:
         if m.is_active():
             active_membership = m.to_dict()
             break
-    
+
     return jsonify({
         'member': member.to_dict(),
         'stats': {

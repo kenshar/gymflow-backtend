@@ -120,17 +120,29 @@ class Membership(db.Model):
     
     def is_active(self):
         """Checking if the membership is actively slaying rn. Membership period still going strong."""
-        return utc_now() < self.end_date
+        end_date = self.end_date
+        # Handle timezone-naive datetimes from SQLite
+        if end_date.tzinfo is None:
+            end_date = end_date.replace(tzinfo=timezone.utc)
+        return utc_now() < end_date
     
     def is_expired(self):
         """Checking if the membership expired. Time flies when you're having gym seshes fr fr."""
-        return utc_now() > self.end_date
+        end_date = self.end_date
+        # Handle timezone-naive datetimes from SQLite
+        if end_date.tzinfo is None:
+            end_date = end_date.replace(tzinfo=timezone.utc)
+        return utc_now() > end_date
     
     def days_remaining(self):
         """Calculating days remaining until expiry. Lowkey the countdown that matters fr."""
         if self.is_expired():
             return 0
-        return (self.end_date - utc_now()).days
+        end_date = self.end_date
+        # Handle timezone-naive datetimes from SQLite
+        if end_date.tzinfo is None:
+            end_date = end_date.replace(tzinfo=timezone.utc)
+        return (end_date - utc_now()).days
     
     def to_dict(self):
         return {
