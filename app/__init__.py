@@ -34,12 +34,16 @@ def create_app(config_name="development"):
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Configure CORS - Allow all origins and headers for now
+    # Configure CORS - Allow all origins with proper headers for preflight
     CORS(app,
-         origins="*",
-         allow_headers=["Content-Type", "Authorization", "Accept", "X-Requested-With"],
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-         supports_credentials=False)
+         resources={r"/*": {
+             "origins": "*",
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+             "allow_headers": ["Content-Type", "Authorization", "Accept", "X-Requested-With"],
+             "expose_headers": ["Content-Type", "Authorization"],
+             "supports_credentials": False,
+             "max_age": 3600
+         }})
     
     # Create tables
     with app.app_context():
