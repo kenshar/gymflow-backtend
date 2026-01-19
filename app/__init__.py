@@ -24,7 +24,11 @@ def create_app(config_name="development"):
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
-    CORS(app)
+    
+    # Configure CORS
+    frontend_url = os.getenv('FRONTEND_URL', '*')
+    CORS(app, resources={r"/api/*": {"origins": frontend_url}})
+    
     
     # Create tables
     with app.app_context():
