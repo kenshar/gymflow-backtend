@@ -25,10 +25,12 @@ def create_app(config_name="development"):
     db.init_app(app)
     migrate.init_app(app, db)
     
-    # Configure CORS
-    frontend_url = os.getenv('FRONTEND_URL', '*')
-    CORS(app, resources={r"/api/*": {"origins": frontend_url}})
-    
+    # Configure CORS - Allow everything
+    CORS(app, 
+         resources={r"/*": {"origins": "*"}},
+         supports_credentials=True,
+         allow_headers=["*"],
+         methods=["*"])
     
     # Create tables
     with app.app_context():
@@ -42,5 +44,16 @@ def create_app(config_name="development"):
     app.register_blueprint(attendance_bp)
     app.register_blueprint(workouts_bp)
     app.register_blueprint(admin_bp)
+    
+    # Health check endpoints
+    @app.route('/', methods=['GET'])
+    def health():
+        from flask import jsonify
+        return jsonify({'status': 'Backend is running', 'message': 'GymFlow API is online'}), 200
+    
+    @app.route('/api', methods=['GET'])
+    def api_info():
+        from flask import jsonify
+        return jsonify({'message': 'GymFlow API', 'version': '1.0'}), 200
     
     return app
