@@ -121,15 +121,28 @@ def delete_attendance(current_user, attendance_id):
 def get_attendance_stats(current_user):
     """Getting attendance statistics for the current user. Them stats be looking lowkey fire fr."""
     attendances = Attendance.query.filter_by(member_id=current_user.id).all()
-    
+
     total_check_ins = len(attendances)
     total_minutes = sum(a.duration_minutes() for a in attendances)
     avg_session = total_minutes // total_check_ins if total_check_ins > 0 else 0
-    
+
     return jsonify({
         'stats': {
             'total_check_ins': total_check_ins,
             'total_minutes': total_minutes,
             'average_session_minutes': avg_session
         }
+    }), 200
+
+@attendance_bp.route('/today', methods=['GET'])
+@require_auth
+def get_today_attendance(current_user):
+    """Get all attendance records for today"""
+    today = datetime.now(timezone.utc).date()
+    attendances = Attendance.query.filter(
+        db.func.date(Attendance.check_in_time) == today
+    ).all()
+
+    return jsonify({
+        'attendance': [a.to_dict() for a in attendances]
     }), 200
