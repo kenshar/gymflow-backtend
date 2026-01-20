@@ -45,63 +45,54 @@ def get_members():
     }), 200
 
 @members_bp.route('/<int:member_id>', methods=['GET'])
-@require_auth
-def get_member(current_user, member_id):
-    """Getting a specific member bestie. Lowkey that member data is bussin fr."""
+def get_member(member_id):
+    """Get a specific member by ID."""
     member = Member.query.get(member_id)
-    
+
     if not member:
         return jsonify({'error': 'Member not found'}), 404
-    
+
     return jsonify({
         'member': member.to_dict()
     }), 200
 
 @members_bp.route('/<int:member_id>', methods=['PUT'])
-@require_auth
-def update_member(current_user, member_id):
-    """Updating a member's profile no cap. Glow up energy only fr fr."""
-    # Users can only update their own profile
-    if member_id != current_user.id:
-        return jsonify({'error': 'Unauthorized - can only update your own profile'}), 403
-    
+def update_member(member_id):
+    """Update a member's profile."""
     data = request.get_json()
     member = Member.query.get(member_id)
-    
+
     if not member:
         return jsonify({'error': 'Member not found'}), 404
-    
+
     # Update allowed fields
     if 'first_name' in data:
         member.first_name = data['first_name']
     if 'last_name' in data:
         member.last_name = data['last_name']
+    if 'email' in data:
+        member.email = data['email']
     if 'phone' in data:
         member.phone = data['phone']
-    
+
     db.session.commit()
-    
+
     return jsonify({
         'message': 'Member updated successfully',
         'member': member.to_dict()
     }), 200
 
 @members_bp.route('/<int:member_id>', methods=['DELETE'])
-@require_auth
-def delete_member(current_user, member_id):
-    """Deleting a member account. Gone girl energy lowkey. Not it fr."""
-    # Users can only delete their own account
-    if member_id != current_user.id:
-        return jsonify({'error': 'Unauthorized - can only delete your own account'}), 403
-    
+def delete_member(member_id):
+    """Delete a member."""
     member = Member.query.get(member_id)
-    
+
     if not member:
         return jsonify({'error': 'Member not found'}), 404
-    
+
     db.session.delete(member)
     db.session.commit()
-    
+
     return jsonify({'message': 'Member deleted successfully'}), 200
 
 @members_bp.route('/<int:member_id>/membership-status', methods=['GET'])
