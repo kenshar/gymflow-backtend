@@ -9,16 +9,16 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 def register():
     """Register a new member"""
     data = request.get_json()
-    
+
     if not data or not all(k in data for k in ['username', 'email', 'password']):
         return jsonify({'error': 'Missing required fields: username, email, password'}), 400
-    
+
     if Member.query.filter_by(username=data['username']).first():
         return jsonify({'error': 'Username already exists'}), 409
-    
+
     if Member.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Email already exists'}), 409
-    
+
     member = Member(
         username=data['username'],
         email=data['email'],
@@ -26,15 +26,55 @@ def register():
         first_name=data.get('first_name'),
         last_name=data.get('last_name')
     )
-    
+
     db.session.add(member)
     db.session.commit()
-    
+
     access_token = create_access_token(data={"sub": str(member.id)})
-    
+
     return jsonify({
         'message': 'Member registered successfully',
         'member': member.to_dict(),
+        'access_token': access_token,
+        'token_type': 'bearer'
+    }), 201
+
+@auth_bp.route('/setup-admin', methods=['POST'])
+def setup_admin():
+    """One-time admin setup endpoint - creates admin user if none exists"""
+    # Check if any admin exists
+    existing_admin = Member.query.filter_by(role='admin').first()
+    if existing_admin:
+        return jsonify({'error': 'Admin user already exists'}), 409
+
+    data = request.get_json()
+
+    if not data or not all(k in data for k in ['username', 'email', 'password']):
+        return jsonify({'error': 'Missing required fields: username, email, password'}), 400
+
+    if Member.query.filter_by(username=data['username']).first():
+        return jsonify({'error': 'Username already exists'}), 409
+
+    if Member.query.filter_by(email=data['email']).first():
+        return jsonify({'error': 'Email already exists'}), 409
+
+    admin = Member(
+        username=data['username'],
+        email=data['email'],
+        password_hash=hash_password(data['password']),
+        first_name=data.get('first_name', 'Admin'),
+        last_name=data.get('last_name', 'User'),
+        role='admin'
+    )
+
+    db.session.add(admin)
+    db.session.commit()
+
+    access_token = create_access_token(data={"sub": str(admin.id)})
+
+    return jsonify({
+        'message': 'Admin user created successfully',
+        'member': admin.to_dict(),
         'access_token': access_token,
         'token_type': 'bearer'
     }), 201
