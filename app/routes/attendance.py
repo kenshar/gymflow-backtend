@@ -135,9 +135,8 @@ def get_attendance_stats(current_user):
     }), 200
 
 @attendance_bp.route('/today', methods=['GET'])
-@require_auth
-def get_today_attendance(current_user):
-    """Get all attendance records for today"""
+def get_today_attendance():
+    """Get all attendance records for today (for admin dashboard)"""
     today = datetime.now(timezone.utc).date()
     attendances = Attendance.query.filter(
         db.func.date(Attendance.check_in_time) == today
@@ -146,3 +145,41 @@ def get_today_attendance(current_user):
     return jsonify({
         'attendance': [a.to_dict() for a in attendances]
     }), 200
+
+@attendance_bp.route('', methods=['POST'])
+def admin_check_in():
+    """Admin check-in for a member"""
+    data = request.get_json()
+
+    if not data or 'member_id' not in data:
+        return jsonify({'error': 'member_id is required'}), 400
+
+    member_id = data['member_id']
+    member = Member.query.get(member_id)
+
+    if not member:
+        return jsonify({'error': 'Member not found'}), 404
+
+    # Check if already checked in today
+    today = datetime.now(timezone.utc).date()
+    existing = Attendance.query.filter(
+        Attendance.member_id == member_id,
+        db.func.date(Attendance.check_in_time) == today
+    ).first()
+
+    if existing:
+        return jsonify({'error': 'Member already checked in today'}), 400
+
+    attendance = Attendance(
+        member_id=member_id,
+        check_in_time=utc_now(),
+        notes=data.get('notes')
+    )
+
+    db.session.add(attendance)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Check-in successful',
+        'attendance': attendance.to_dict()
+    }), 201

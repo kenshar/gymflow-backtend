@@ -37,9 +37,8 @@ def create_member():
     }), 201
 
 @members_bp.route('', methods=['GET'])
-@require_auth
-def get_members(current_user):
-    """Getting all members. No cap, we serving the full member tea rn fr."""
+def get_members():
+    """Get all members for admin dashboard."""
     members = Member.query.all()
     return jsonify({
         'members': [m.to_dict() for m in members]
