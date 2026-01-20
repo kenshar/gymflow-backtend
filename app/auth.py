@@ -5,8 +5,8 @@ from flask import request, jsonify, current_app
 from functools import wraps
 import os
 
-# Use argon2 instead of bcrypt (no 72-byte limit)
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+# Use bcrypt for password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
