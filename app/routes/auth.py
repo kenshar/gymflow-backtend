@@ -42,45 +42,54 @@ def register():
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """Login with email/username and password"""
-    data = request.get_json()
+    try:
+        data = request.get_json()
 
-    if not data or 'password' not in data:
-        return jsonify({'error': 'Missing password'}), 400
+        if not data or 'password' not in data:
+            return jsonify({'error': 'Missing password'}), 400
 
-    # Accept either email or username for login
-    identifier = data.get('email') or data.get('username')
-    if not identifier:
-        return jsonify({'error': 'Missing email or username'}), 400
+        # Accept either email or username for login
+        identifier = data.get('email') or data.get('username')
+        if not identifier:
+            return jsonify({'error': 'Missing email or username'}), 400
 
-    # Try to find member by email first, then by username
-    member = Member.query.filter_by(email=identifier).first()
-    if not member:
-        member = Member.query.filter_by(username=identifier).first()
-    
-    # Check if account is locked
-    if member and member.is_account_locked():
-        return jsonify({'error': 'Account is locked. Try again later.'}), 403
-    
-    if not member or not verify_password(data['password'], member.password_hash):
-        # Increment failed attempts
-        if member:
+        # Try to find member by email first, then by username
+        member = Member.query.filter_by(email=identifier).first()
+        if not member:
+            member = Member.query.filter_by(username=identifier).first()
+
+        if not member:
+            return jsonify({'error': 'Invalid credentials'}), 401
+
+        # Check if account is locked
+        if member.is_account_locked():
+            return jsonify({'error': 'Account is locked. Try again later.'}), 403
+
+        # Verify password
+        if not verify_password(data['password'], member.password_hash):
+            # Increment failed attempts
             member.increment_failed_attempts()
             db.session.commit()
-        return jsonify({'error': 'Invalid credentials'}), 401
-    
-    # Reset failed attempts on successful login
-    if member.failed_login_attempts > 0:
-        member.reset_failed_attempts()
-        db.session.commit()
-    
-    access_token = create_access_token(data={"sub": str(member.id)})
-    
-    return jsonify({
-        'message': 'Login successful',
-        'member': member.to_dict(),
-        'access_token': access_token,
-        'token_type': 'bearer'
-    }), 200
+            return jsonify({'error': 'Invalid credentials'}), 401
+
+        # Reset failed attempts on successful login
+        if member.failed_login_attempts > 0:
+            member.reset_failed_attempts()
+            db.session.commit()
+
+        access_token = create_access_token(data={"sub": str(member.id)})
+
+        return jsonify({
+            'message': 'Login successful',
+            'member': member.to_dict(),
+            'access_token': access_token,
+            'token_type': 'bearer'
+        }), 200
+    except Exception as e:
+        import traceback
+        print(f"Login error: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({'error': f'Login failed: {str(e)}'}), 500
 
 @auth_bp.route('/me', methods=['GET'])
 @require_auth
