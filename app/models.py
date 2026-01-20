@@ -239,13 +239,86 @@ class WorkoutExercise(db.Model):
 
 class TokenBlacklist(db.Model):
     __tablename__ = "token_blacklist"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     token = db.Column(db.String(500), unique=True, nullable=False, index=True)
     member_id = db.Column(db.Integer, db.ForeignKey("members.id"), nullable=False, index=True)
     blacklisted_at = db.Column(db.DateTime, default=utc_now)
     expires_at = db.Column(db.DateTime, nullable=False)
-    
+
     def is_blacklisted(self):
         """Check if the token is still blacklisted."""
         return utc_now() < self.expires_at
+
+
+class Payment(db.Model):
+    __tablename__ = "payments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    member_id = db.Column(db.Integer, db.ForeignKey("members.id"), nullable=False, index=True)
+    membership_id = db.Column(db.Integer, db.ForeignKey("memberships.id"), nullable=True, index=True)
+    amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(10), default='KES')
+    payment_method = db.Column(db.String(20), nullable=False)  # stripe, cash, mpesa
+    payment_status = db.Column(db.String(20), default='pending')  # pending, completed, failed, refunded
+    stripe_payment_id = db.Column(db.String(255), nullable=True)
+    stripe_checkout_session_id = db.Column(db.String(255), nullable=True, unique=True)
+    description = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    recorded_by = db.Column(db.Integer, db.ForeignKey("members.id"), nullable=True)
+    created_at = db.Column(db.DateTime, default=utc_now)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now)
+
+    # Relationships
+    member = db.relationship("Member", foreign_keys=[member_id], backref="payments")
+    membership = db.relationship("Membership", backref="payment")
+    recorder = db.relationship("Member", foreign_keys=[recorded_by])
+    receipt = db.relationship("Receipt", back_populates="payment", uselist=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'member_id': self.member_id,
+            'member': {
+                'id': self.member.id,
+                'username': self.member.username,
+                'first_name': self.member.first_name,
+                'last_name': self.member.last_name,
+            } if self.member else None,
+            'membership_id': self.membership_id,
+            'amount': self.amount,
+            'currency': self.currency,
+            'payment_method': self.payment_method,
+            'payment_status': self.payment_status,
+            'stripe_payment_id': self.stripe_payment_id,
+            'description': self.description,
+            'notes': self.notes,
+            'recorded_by': self.recorded_by,
+            'receipt': self.receipt.to_dict() if self.receipt else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class Receipt(db.Model):
+    __tablename__ = "receipts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    payment_id = db.Column(db.Integer, db.ForeignKey("payments.id"), nullable=False, unique=True, index=True)
+    receipt_number = db.Column(db.String(50), unique=True, nullable=False, index=True)  # GF-YYYYMMDD-XXXX
+    pdf_path = db.Column(db.String(255), nullable=True)
+    issued_at = db.Column(db.DateTime, default=utc_now)
+    created_at = db.Column(db.DateTime, default=utc_now)
+
+    # Relationships
+    payment = db.relationship("Payment", back_populates="receipt")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'payment_id': self.payment_id,
+            'receipt_number': self.receipt_number,
+            'pdf_path': self.pdf_path,
+            'issued_at': self.issued_at.isoformat() if self.issued_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
