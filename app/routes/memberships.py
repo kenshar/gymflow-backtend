@@ -11,11 +11,37 @@ def utc_now():
 
 @memberships_bp.route('/plans', methods=['GET'])
 def get_plans():
-    """Getting all available membership plans. Slay with these options bestie fr fr."""
+    """Getting all available membership plans."""
     plans = MembershipPlan.query.all()
     return jsonify({
         'plans': [p.to_dict() for p in plans]
     }), 200
+
+@memberships_bp.route('/plans', methods=['POST'])
+def create_plan():
+    """Create a new membership plan."""
+    data = request.get_json()
+
+    if not data or not all(k in data for k in ['name', 'duration_days']):
+        return jsonify({'error': 'Missing required fields: name, duration_days'}), 400
+
+    if MembershipPlan.query.filter_by(name=data['name']).first():
+        return jsonify({'error': 'Plan with this name already exists'}), 409
+
+    plan = MembershipPlan(
+        name=data['name'],
+        duration_days=data['duration_days'],
+        price=data.get('price'),
+        description=data.get('description')
+    )
+
+    db.session.add(plan)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Plan created successfully',
+        'plan': plan.to_dict()
+    }), 201
 
 @memberships_bp.route('', methods=['GET'])
 @require_auth
@@ -44,31 +70,45 @@ def get_membership(current_user, membership_id):
     }), 200
 
 @memberships_bp.route('', methods=['POST'])
-@require_auth
-def create_membership(current_user):
-    """Creating/purchasing a new membership for the current user. That commitment energy no cap fr."""
+def create_membership():
+    """Creating/purchasing a new membership. Supports admin creating for any member."""
     data = request.get_json()
-    
+
     if not data or 'plan_id' not in data:
         return jsonify({'error': 'Missing required field: plan_id'}), 400
-    
+
     plan = MembershipPlan.query.get(data['plan_id'])
     if not plan:
         return jsonify({'error': 'Membership plan not found'}), 404
-    
-    start_date = utc_now()
+
+    # Use member_id from request if provided, otherwise would need auth
+    member_id = data.get('member_id')
+    if not member_id:
+        return jsonify({'error': 'Missing required field: member_id'}), 400
+
+    # Verify member exists
+    member = Member.query.get(member_id)
+    if not member:
+        return jsonify({'error': 'Member not found'}), 404
+
+    # Parse start_date if provided, otherwise use now
+    if data.get('start_date'):
+        start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').replace(tzinfo=timezone.utc)
+    else:
+        start_date = utc_now()
+
     end_date = start_date + timedelta(days=plan.duration_days)
-    
+
     membership = Membership(
-        member_id=current_user.id,
+        member_id=member_id,
         plan_id=plan.id,
         start_date=start_date,
         end_date=end_date
     )
-    
+
     db.session.add(membership)
     db.session.commit()
-    
+
     return jsonify({
         'message': 'Membership created successfully',
         'membership': membership.to_dict()

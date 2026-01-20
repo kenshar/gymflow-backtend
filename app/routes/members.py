@@ -1,8 +1,40 @@
 from flask import Blueprint, request, jsonify
 from app.models import db, Member
-from app.auth import require_auth
+from app.auth import require_auth, hash_password
 
 members_bp = Blueprint('members', __name__, url_prefix='/api/members')
+
+@members_bp.route('', methods=['POST'])
+def create_member():
+    """Create a new member (admin use)."""
+    data = request.get_json()
+
+    if not data or not all(k in data for k in ['username', 'email', 'password']):
+        return jsonify({'error': 'Missing required fields: username, email, password'}), 400
+
+    if Member.query.filter_by(username=data['username']).first():
+        return jsonify({'error': 'Username already exists'}), 409
+
+    if Member.query.filter_by(email=data['email']).first():
+        return jsonify({'error': 'Email already exists'}), 409
+
+    member = Member(
+        username=data['username'],
+        email=data['email'],
+        password_hash=hash_password(data['password']),
+        first_name=data.get('first_name'),
+        last_name=data.get('last_name'),
+        phone=data.get('phone'),
+        role='member'
+    )
+
+    db.session.add(member)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Member created successfully',
+        'member': member.to_dict()
+    }), 201
 
 @members_bp.route('', methods=['GET'])
 @require_auth
