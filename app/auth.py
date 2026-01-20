@@ -5,8 +5,8 @@ from flask import request, jsonify, current_app
 from functools import wraps
 import os
 
-# Use bcrypt for password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Use bcrypt for password hashing with auto-truncation
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__truncate_error=False)
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
