@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 memberships_bp = Blueprint('memberships', __name__, url_prefix='/api/memberships')
 
 def utc_now():
-    """Returning the current UTC time rn (timezone-aware). No cap fr fr."""
+    """Return the current UTC time (timezone-aware)."""
     return datetime.now(timezone.utc)
 
 @memberships_bp.route('/plans', methods=['GET'])
@@ -52,7 +52,7 @@ def create_plan(current_user):
 @memberships_bp.route('', methods=['GET'])
 @require_auth
 def get_memberships(current_user):
-    """Getting all memberships for the current user. Pulling the membership energy lowkey."""
+    """Get all memberships for the current user."""
     memberships = Membership.query.filter_by(member_id=current_user.id).all()
     return jsonify({
         'memberships': [m.to_dict() for m in memberships]
@@ -61,7 +61,7 @@ def get_memberships(current_user):
 @memberships_bp.route('/<int:membership_id>', methods=['GET'])
 @require_auth
 def get_membership(current_user, membership_id):
-    """Getting a specific membership rn. That tea be hitting different fr."""
+    """Get a specific membership."""
     membership = Membership.query.get(membership_id)
     
     if not membership:
@@ -127,7 +127,7 @@ def create_membership(current_user):
 @memberships_bp.route('/<int:membership_id>', methods=['PUT'])
 @require_auth
 def renew_membership(current_user, membership_id):
-    """Renewing/extending an existing membership rn. Resetting that timer bestie fr."""
+    """Renew/extend an existing membership."""
     membership = Membership.query.get(membership_id)
     
     if not membership:
@@ -163,7 +163,7 @@ def renew_membership(current_user, membership_id):
 @memberships_bp.route('/<int:membership_id>', methods=['DELETE'])
 @require_auth
 def cancel_membership(current_user, membership_id):
-    """Canceling a membership fr fr. The breakup energy lowkey. Not it bestie."""
+    """Cancel a membership."""
     membership = Membership.query.get(membership_id)
     
     if not membership:

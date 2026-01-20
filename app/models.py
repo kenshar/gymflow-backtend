@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 db = SQLAlchemy()
 
 def utc_now():
-    """Returning the current UTC time rn (timezone-aware). No cap, this is lowkey essential fr fr."""
+    """Return the current UTC time (timezone-aware)."""
     return datetime.now(timezone.utc)
 
 class Member(db.Model):
@@ -31,37 +31,37 @@ class Member(db.Model):
     workout_logs = db.relationship("WorkoutLog", back_populates="member", cascade="all, delete-orphan")
     
     def is_account_locked(self):
-        """Checking if this account is locked rn.."""
+        """Check if this account is locked."""
         if not self.locked_until:
             return False
         return utc_now() < self.locked_until
     
     def unlock_account(self):
-        """Unlocking the account cuz it got locked."""
+        """Unlock the account."""
         self.failed_login_attempts = 0
         self.locked_until = None
     
     def increment_failed_attempts(self):
-        """Incrementing failed login attempts and locking if needed. Stop trying fr, you're not it."""
+        """Increment failed login attempts and lock if needed."""
         self.failed_login_attempts += 1
         if self.failed_login_attempts >= 5:
             from datetime import timedelta
             self.locked_until = utc_now() + timedelta(minutes=30)
     
     def reset_failed_attempts(self):
-        """Resetting failed login attempts. No cap, you're coming back strong bestie."""
+        """Reset failed login attempts."""
         self.failed_login_attempts = 0
         self.locked_until = None
     
     def is_active(self):
-        """Checking if this member is giving active membership vibes rn. That's the energy we need."""
+        """Check if this member has an active membership."""
         if not self.memberships:
             return False
         active_membership = [m for m in self.memberships if m.is_active()]
         return len(active_membership) > 0
     
     def has_role(self, role):
-        """Checking if this member's role is hitting different fr. That's the vibe we're seeking."""
+        """Check if this member has the specified role."""
         return self.role == role or self.role == 'admin'
     
     def to_dict(self):
@@ -119,7 +119,7 @@ class Membership(db.Model):
     plan = db.relationship("MembershipPlan", back_populates="memberships")
     
     def is_active(self):
-        """Checking if the membership is actively slaying rn. Membership period still going strong."""
+        """Check if the membership is currently active."""
         end_date = self.end_date
         # Handle timezone-naive datetimes from SQLite
         if end_date.tzinfo is None:
@@ -127,7 +127,7 @@ class Membership(db.Model):
         return utc_now() < end_date
     
     def is_expired(self):
-        """Checking if the membership expired. Time flies when you're having gym seshes fr fr."""
+        """Check if the membership has expired."""
         end_date = self.end_date
         # Handle timezone-naive datetimes from SQLite
         if end_date.tzinfo is None:
@@ -135,7 +135,7 @@ class Membership(db.Model):
         return utc_now() > end_date
     
     def days_remaining(self):
-        """Calculating days remaining until expiry. Lowkey the countdown that matters fr."""
+        """Calculate days remaining until expiry."""
         if self.is_expired():
             return 0
         end_date = self.end_date
@@ -171,7 +171,7 @@ class Attendance(db.Model):
     member = db.relationship("Member", back_populates="attendances")
     
     def duration_minutes(self):
-        """Calculating the session duration in minutes. That's your grind time no cap fr."""
+        """Calculate the session duration in minutes."""
         if not self.check_out_time:
             return 0
         return int((self.check_out_time - self.check_in_time).total_seconds() / 60)
@@ -247,5 +247,5 @@ class TokenBlacklist(db.Model):
     expires_at = db.Column(db.DateTime, nullable=False)
     
     def is_blacklisted(self):
-        """Checking if the token is still blacklisted fr. This token got canceled no cap fr."""
+        """Check if the token is still blacklisted."""
         return utc_now() < self.expires_at

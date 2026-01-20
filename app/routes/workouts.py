@@ -6,13 +6,13 @@ from datetime import datetime, timezone
 workouts_bp = Blueprint('workouts', __name__, url_prefix='/api/workouts')
 
 def utc_now():
-    """Returning the current UTC time rn (timezone-aware). No cap fr fr."""
+    """Return the current UTC time (timezone-aware)."""
     return datetime.now(timezone.utc)
 
 @workouts_bp.route('', methods=['GET'])
 @require_auth
 def get_workouts(current_user):
-    """Getting all workouts for the current user. Pulling those W's fr fr."""
+    """Get all workouts for the current user."""
     workouts = WorkoutLog.query.filter_by(member_id=current_user.id).order_by(WorkoutLog.workout_date.desc()).all()
     return jsonify({
         'workouts': [w.to_dict() for w in workouts]
@@ -21,7 +21,7 @@ def get_workouts(current_user):
 @workouts_bp.route('/<int:workout_id>', methods=['GET'])
 @require_auth
 def get_workout(current_user, workout_id):
-    """Getting a specific workout lowkey. That exercise data be serving rn fr."""
+    """Get a specific workout."""
     workout = WorkoutLog.query.get(workout_id)
     
     if not workout:
@@ -38,32 +38,46 @@ def get_workout(current_user, workout_id):
 @workouts_bp.route('', methods=['POST'])
 @require_auth
 def create_workout(current_user):
-    """Logging a new workout session rn. Getting those gains documented bestie no cap fr."""
+    """Log a new workout session."""
     data = request.get_json()
-    
+
     if not data or 'exercises' not in data:
         return jsonify({'error': 'Missing required field: exercises'}), 400
-    
+
     # Validate exercises
     exercises = data.get('exercises', [])
     if not isinstance(exercises, list) or len(exercises) == 0:
         return jsonify({'error': 'exercises must be a non-empty list'}), 400
-    
+
     for exercise in exercises:
         if not all(k in exercise for k in ['exercise_name', 'sets', 'reps']):
             return jsonify({'error': 'Each exercise must have: exercise_name, sets, reps'}), 400
-    
+
+    # Allow admins to log workouts for any member
+    member_id = data.get('member_id')
+    if member_id:
+        if current_user.role != 'admin':
+            return jsonify({'error': 'Only admins can log workouts for other members'}), 403
+
+        # Verify member exists
+        member = Member.query.get(member_id)
+        if not member:
+            return jsonify({'error': 'Member not found'}), 404
+    else:
+        member_id = current_user.id
+
     workout_date = datetime.fromisoformat(data.get('workout_date', utc_now().isoformat()))
-    
+    duration = data.get('duration')
+
     workout = WorkoutLog(
-        member_id=current_user.id,
+        member_id=member_id,
         workout_date=workout_date,
         notes=data.get('notes')
     )
-    
+
     db.session.add(workout)
     db.session.flush()  # Get the workout ID without committing
-    
+
     # Add exercises
     for exercise_data in exercises:
         exercise = WorkoutExercise(
@@ -75,9 +89,9 @@ def create_workout(current_user):
             notes=exercise_data.get('notes')
         )
         db.session.add(exercise)
-    
+
     db.session.commit()
-    
+
     return jsonify({
         'message': 'Workout logged successfully',
         'workout': workout.to_dict()
@@ -86,7 +100,7 @@ def create_workout(current_user):
 @workouts_bp.route('/<int:workout_id>', methods=['PUT'])
 @require_auth
 def update_workout(current_user, workout_id):
-    """Updating a workout fr fr. Recalibrating them gains energy bestie."""
+    """Update a workout."""
     workout = WorkoutLog.query.get(workout_id)
     
     if not workout:
@@ -134,7 +148,7 @@ def update_workout(current_user, workout_id):
 @workouts_bp.route('/<int:workout_id>', methods=['DELETE'])
 @require_auth
 def delete_workout(current_user, workout_id):
-    """Deleting a workout rn. Removing the evidence bestie. Not it fr."""
+    """Delete a workout."""
     workout = WorkoutLog.query.get(workout_id)
     
     if not workout:
@@ -152,7 +166,7 @@ def delete_workout(current_user, workout_id):
 @workouts_bp.route('/<int:workout_id>/exercises', methods=['POST'])
 @require_auth
 def add_exercise(current_user, workout_id):
-    """Adding an exercise to an existing workout fr fr. That gains energy fr."""
+    """Add an exercise to an existing workout."""
     workout = WorkoutLog.query.get(workout_id)
     
     if not workout:

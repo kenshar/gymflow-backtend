@@ -123,7 +123,7 @@ def delete_member(current_user, member_id):
 @members_bp.route('/<int:member_id>/membership-status', methods=['GET'])
 @require_auth
 def get_membership_status(current_user, member_id):
-    """Getting a member's active membership status. Checking if that membership is still giving bestie fr."""
+    """Get a member's active membership status."""
     member = Member.query.get(member_id)
     
     if not member:

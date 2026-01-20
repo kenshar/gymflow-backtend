@@ -6,13 +6,13 @@ from datetime import datetime, timezone
 attendance_bp = Blueprint('attendance', __name__, url_prefix='/api/attendance')
 
 def utc_now():
-    """Returning the current UTC time rn (timezone-aware). No cap fr fr."""
+    """Return the current UTC time (timezone-aware)."""
     return datetime.now(timezone.utc)
 
 @attendance_bp.route('', methods=['GET'])
 @require_auth
 def get_attendances(current_user):
-    """Getting all attendance records (admin) or user's own (member). Pulling that attendance tea fr."""
+    """Get all attendance records (admin) or user's own (member)."""
     # If query param member_id is provided and user is admin, get that member's attendance
     member_id = request.args.get('member_id', type=int)
     
@@ -32,7 +32,7 @@ def get_attendances(current_user):
 @attendance_bp.route('/<int:attendance_id>', methods=['GET'])
 @require_auth
 def get_attendance(current_user, attendance_id):
-    """Getting a specific attendance record. Lowkey this is the tea you asked for bestie."""
+    """Get a specific attendance record."""
     attendance = Attendance.query.get(attendance_id)
     
     if not attendance:
@@ -49,7 +49,7 @@ def get_attendance(current_user, attendance_id):
 @attendance_bp.route('/check-in', methods=['POST'])
 @require_auth
 def check_in(current_user):
-    """Checking in to the gym fr fr. Getting those gains energy lowkey."""
+    """Check in to the gym."""
     # Check if already checked in
     active_attendance = Attendance.query.filter_by(
         member_id=current_user.id,
@@ -75,7 +75,7 @@ def check_in(current_user):
 @attendance_bp.route('/check-out', methods=['POST'])
 @require_auth
 def check_out(current_user):
-    """Checking out from the gym no cap. Them workout gains gonna be calculated fr."""
+    """Check out from the gym."""
     data = request.get_json() or {}
     
     # Get the most recent active check-in
@@ -101,7 +101,7 @@ def check_out(current_user):
 @attendance_bp.route('/<int:attendance_id>', methods=['DELETE'])
 @require_auth
 def delete_attendance(current_user, attendance_id):
-    """Deleting an attendance record bestie. Wiping it like it never happened fr."""
+    """Delete an attendance record."""
     attendance = Attendance.query.get(attendance_id)
     
     if not attendance:
@@ -119,7 +119,7 @@ def delete_attendance(current_user, attendance_id):
 @attendance_bp.route('/stats', methods=['GET'])
 @require_auth
 def get_attendance_stats(current_user):
-    """Getting attendance statistics for the current user. Them stats be looking lowkey fire fr."""
+    """Get attendance statistics for the current user."""
     attendances = Attendance.query.filter_by(member_id=current_user.id).all()
 
     total_check_ins = len(attendances)
