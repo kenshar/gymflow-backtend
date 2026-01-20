@@ -75,7 +75,7 @@ class Member(db.Model):
             'role': self.role,
             'is_active': self.is_active(),
             'is_locked': self.is_account_locked(),
-            'created_at': self.created_at.isoformat(),
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
 
 

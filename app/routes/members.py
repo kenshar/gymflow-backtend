@@ -5,8 +5,13 @@ from app.auth import require_auth, hash_password
 members_bp = Blueprint('members', __name__, url_prefix='/api/members')
 
 @members_bp.route('', methods=['POST'])
-def create_member():
+@require_auth
+def create_member(current_user):
     """Create a new member (admin use)."""
+    # Only admins can create members
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Admin access required'}), 403
+
     data = request.get_json()
 
     if not data or not all(k in data for k in ['username', 'email', 'password']):
@@ -37,33 +42,48 @@ def create_member():
     }), 201
 
 @members_bp.route('', methods=['GET'])
-def get_members():
+@require_auth
+def get_members(current_user):
     """Get all members for admin dashboard."""
+    # Only admins can view all members
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Admin access required'}), 403
+
     members = Member.query.all()
     return jsonify({
         'members': [m.to_dict() for m in members]
     }), 200
 
 @members_bp.route('/<int:member_id>', methods=['GET'])
-def get_member(member_id):
+@require_auth
+def get_member(current_user, member_id):
     """Get a specific member by ID."""
     member = Member.query.get(member_id)
 
     if not member:
         return jsonify({'error': 'Member not found'}), 404
 
+    # Users can view their own profile, admins can view any profile
+    if current_user.id != member_id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+
     return jsonify({
         'member': member.to_dict()
     }), 200
 
 @members_bp.route('/<int:member_id>', methods=['PUT'])
-def update_member(member_id):
+@require_auth
+def update_member(current_user, member_id):
     """Update a member's profile."""
     data = request.get_json()
     member = Member.query.get(member_id)
 
     if not member:
         return jsonify({'error': 'Member not found'}), 404
+
+    # Users can update their own profile, admins can update any profile
+    if current_user.id != member_id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
 
     # Update allowed fields
     if 'first_name' in data:
@@ -83,8 +103,13 @@ def update_member(member_id):
     }), 200
 
 @members_bp.route('/<int:member_id>', methods=['DELETE'])
-def delete_member(member_id):
+@require_auth
+def delete_member(current_user, member_id):
     """Delete a member."""
+    # Only admins can delete members
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Admin access required'}), 403
+
     member = Member.query.get(member_id)
 
     if not member:

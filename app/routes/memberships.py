@@ -10,7 +10,8 @@ def utc_now():
     return datetime.now(timezone.utc)
 
 @memberships_bp.route('/plans', methods=['GET'])
-def get_plans():
+@require_auth
+def get_plans(current_user):
     """Getting all available membership plans."""
     plans = MembershipPlan.query.all()
     return jsonify({
@@ -18,8 +19,13 @@ def get_plans():
     }), 200
 
 @memberships_bp.route('/plans', methods=['POST'])
-def create_plan():
+@require_auth
+def create_plan(current_user):
     """Create a new membership plan."""
+    # Only admins can create plans
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Admin access required'}), 403
+
     data = request.get_json()
 
     if not data or not all(k in data for k in ['name', 'duration_days']):
@@ -70,7 +76,8 @@ def get_membership(current_user, membership_id):
     }), 200
 
 @memberships_bp.route('', methods=['POST'])
-def create_membership():
+@require_auth
+def create_membership(current_user):
     """Creating/purchasing a new membership. Supports admin creating for any member."""
     data = request.get_json()
 
@@ -81,10 +88,13 @@ def create_membership():
     if not plan:
         return jsonify({'error': 'Membership plan not found'}), 404
 
-    # Use member_id from request if provided, otherwise would need auth
+    # Admin can create for any member, regular users create for themselves
     member_id = data.get('member_id')
-    if not member_id:
-        return jsonify({'error': 'Missing required field: member_id'}), 400
+    if member_id and member_id != current_user.id:
+        if current_user.role != 'admin':
+            return jsonify({'error': 'Admin access required to create membership for others'}), 403
+    else:
+        member_id = current_user.id
 
     # Verify member exists
     member = Member.query.get(member_id)

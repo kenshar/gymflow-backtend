@@ -135,8 +135,13 @@ def get_attendance_stats(current_user):
     }), 200
 
 @attendance_bp.route('/today', methods=['GET'])
-def get_today_attendance():
+@require_auth
+def get_today_attendance(current_user):
     """Get all attendance records for today (for admin dashboard)"""
+    # Only admins can view all attendance
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Admin access required'}), 403
+
     today = datetime.now(timezone.utc).date()
     attendances = Attendance.query.filter(
         db.func.date(Attendance.check_in_time) == today
@@ -147,8 +152,13 @@ def get_today_attendance():
     }), 200
 
 @attendance_bp.route('', methods=['POST'])
-def admin_check_in():
+@require_auth
+def admin_check_in(current_user):
     """Admin check-in for a member"""
+    # Only admins can check in other members
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Admin access required'}), 403
+
     data = request.get_json()
 
     if not data or 'member_id' not in data:

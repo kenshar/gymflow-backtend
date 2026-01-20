@@ -41,13 +41,21 @@ def register():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """Login with username and password"""
+    """Login with email/username and password"""
     data = request.get_json()
-    
-    if not data or not all(k in data for k in ['username', 'password']):
-        return jsonify({'error': 'Missing username or password'}), 400
-    
-    member = Member.query.filter_by(username=data['username']).first()
+
+    if not data or 'password' not in data:
+        return jsonify({'error': 'Missing password'}), 400
+
+    # Accept either email or username for login
+    identifier = data.get('email') or data.get('username')
+    if not identifier:
+        return jsonify({'error': 'Missing email or username'}), 400
+
+    # Try to find member by email first, then by username
+    member = Member.query.filter_by(email=identifier).first()
+    if not member:
+        member = Member.query.filter_by(username=identifier).first()
     
     # Check if account is locked
     if member and member.is_account_locked():
